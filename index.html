@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Mood Music App — Scan mood kamu dan dapet playlist yang pas!" />
+    <title>Mood Music 🎧</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Circular+Std:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">🎧</div>
+        <span class="logo-text">MoodTunes</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" id="nav-home" onclick="switchView('home', this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          <span>Beranda</span>
+        </a>
+        <a href="#" class="nav-item" id="nav-search" onclick="switchView('search', this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <span>Cari Lagu</span>
+        </a>
+        <a href="#" class="nav-item" id="nav-mood" onclick="switchView('mood', this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+          <span>Scan Mood</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-section-title">LIBRARY</div>
+      <div class="sidebar-library">
+        <div class="library-item" id="lib-liked">
+          <div class="library-icon liked-icon">♥</div>
+          <div class="library-info">
+            <div class="library-name">Liked Songs</div>
+            <div class="library-meta">Playlist • Kamu</div>
+          </div>
+        </div>
+        <div class="library-item" id="lib-mood-playlist">
+          <div class="library-icon mood-icon">✨</div>
+          <div class="library-info">
+            <div class="library-name">Mood Playlist</div>
+            <div class="library-meta">Playlist • Auto-generated</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="main-content" id="mainContent">
+
+      <!-- Top Bar -->
+      <div class="topbar">
+        <div class="topbar-greeting" id="greeting">Selamat Malam 🌙</div>
+        <div class="topbar-profile">
+          <div class="profile-avatar">👤</div>
+        </div>
+      </div>
+
+      <!-- ===== HOME VIEW ===== -->
+      <section class="view active" id="view-home">
+        <div class="section-title">Apa yang mau kamu dengerin?</div>
+        <div class="home-grid">
+          <div class="home-card green" onclick="switchView('search', document.getElementById('nav-search'))">
+            <div class="home-card-icon">🔍</div>
+            <div class="home-card-text">Cari Lagu</div>
+          </div>
+          <div class="home-card purple" onclick="switchView('mood', document.getElementById('nav-mood'))">
+            <div class="home-card-icon">😆</div>
+            <div class="home-card-text">Scan Mood</div>
+          </div>
+        </div>
+
+        <div class="section-title" style="margin-top: 36px;">Mulai dari sini 🎯</div>
+        <div class="feature-cards">
+          <div class="feature-card" onclick="switchView('mood', document.getElementById('nav-mood'))">
+            <div class="feature-card-art purple-bg">
+              <span style="font-size:40px;">🌙</span>
+            </div>
+            <div class="feature-card-title">Mood Hari Ini</div>
+            <div class="feature-card-desc">Biar kita pilihkan lagu yang pas buat kamu</div>
+          </div>
+          <div class="feature-card" onclick="switchView('search', document.getElementById('nav-search'))">
+            <div class="feature-card-art green-bg">
+              <span style="font-size:40px;">🎵</span>
+            </div>
+            <div class="feature-card-title">Cari & Play</div>
+            <div class="feature-card-desc">Search lagu favorit kamu langsung</div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-card-art blue-bg">
+              <span style="font-size:40px;">✨</span>
+            </div>
+            <div class="feature-card-title">Discover</div>
+            <div class="feature-card-desc">Temukan lagu baru yang kamu suka</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== SEARCH VIEW ===== -->
+      <section class="view" id="view-search">
+        <div class="section-title">Cari Lagu 🔍</div>
+
+        <div class="search-container">
+          <div class="search-bar-wrapper">
+            <svg class="search-input-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input id="searchInput" type="text" placeholder="Artis, lagu, atau album..." autocomplete="off" />
+            <button class="btn-search" onclick="searchSong()" id="searchBtn">Cari</button>
+          </div>
+        </div>
+
+        <div id="searchResult" class="results-grid"></div>
+
+        <!-- Player Section -->
+        <div id="playerSection" style="display:none;">
+          <div class="now-playing-inline" id="nowPlayingBar">
+            <div class="npi-dot"></div>
+            <span class="npi-text" id="nowPlaying"></span>
+          </div>
+          <audio id="audioPlayer" controls autoplay></audio>
+          <iframe id="youtubePlayer" allow="autoplay; encrypted-media; fullscreen" allowfullscreen frameborder="0"></iframe>
+        </div>
+      </section>
+
+      <!-- ===== MOOD VIEW ===== -->
+      <section class="view" id="view-mood">
+        <div class="section-title">Scan Mood 😆</div>
+        <div class="mood-hero">
+          <div class="mood-hero-art" id="moodHeroArt">
+            <span class="mood-hero-emoji" id="moodHeroEmoji">🎭</span>
+          </div>
+          <div class="mood-hero-info">
+            <div class="mood-hero-label">Mood kamu sekarang</div>
+            <div class="mood-hero-value" id="moodText">Belum di-scan</div>
+            <button class="btn-mood" onclick="scanMood()" id="scanBtn">
+              <span class="btn-mood-icon">✨</span>
+              Scan Wajah Gue
+            </button>
+          </div>
+        </div>
+
+        <div id="playlist" class="playlist-container"></div>
+      </section>
+
+      <!-- ===== LYRICS VIEW ===== -->
+      <section class="view" id="view-lyrics">
+        <div class="lyrics-header" style="display: flex; gap: 20px; align-items: center; margin-bottom: 30px;">
+          <div class="lyrics-art" id="lyricsArt" style="width: 80px; height: 80px; border-radius: 8px; background: var(--bg-highlight); display: flex; align-items: center; justify-content: center; font-size: 32px; overflow: hidden;">
+            <span>🎵</span>
+          </div>
+          <div class="lyrics-info">
+            <h2 class="lyrics-title" id="lyricsTitle" style="font-size: 28px; margin-bottom: 4px;">Belum ada lagu</h2>
+            <p class="lyrics-artist" id="lyricsArtist" style="font-size: 16px; color: var(--text-secondary);">—</p>
+          </div>
+        </div>
+        <div class="lyrics-scroll" id="lyricsScroll" style="flex: 1; overflow-y: auto; position: relative; padding-bottom: 100px;">
+          <div class="lyrics-content" id="lyricsContent" style="font-size: 32px; font-weight: 700; line-height: 1.5; color: var(--text-secondary); max-width: 800px; padding: 20px 0;">
+            <p class="lyrics-placeholder" style="font-size: 20px; color: var(--text-muted);">Putar lagu untuk melihat lirik 🎤</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== ARTIST VIEW ===== -->
+      <section class="view" id="view-artist">
+        <button class="artist-back-btn" onclick="switchView('search', document.getElementById('nav-search'))">
+          ← Kembali
+        </button>
+        <div class="artist-hero" id="artistHero">
+          <div class="artist-hero-bg" id="artistHeroBg"></div>
+          <div class="artist-hero-content">
+            <div class="artist-avatar" id="artistAvatar"><span>👤</span></div>
+            <div class="artist-hero-info">
+              <div class="artist-verified">
+                <span class="verified-icon">✓</span> Diverifikasi oleh iTunes
+              </div>
+              <h1 class="artist-name-title" id="artistNameTitle">Nama Artis</h1>
+              <div class="artist-stats" id="artistStats">1.234.567 pendengar bulanan</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="artist-actions">
+          <button class="btn-play-artist" id="btnPlayArtist" onclick="playArtistTopTracks()">▶</button>
+          <button class="btn-follow-artist">Ikuti</button>
+          <button class="btn-more-artist">•••</button>
+        </div>
+
+        <div class="artist-content-section">
+          <h2 class="section-title">Populer</h2>
+          <div id="artistTopTracks" class="results-grid artist-tracks-grid">
+            <p class="loading-text">Memuat lagu...<span class="loading-dots"></span></p>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ===== QUEUE SIDEBAR ===== -->
+      <aside class="queue-sidebar" id="queueSidebar">
+        <div class="queue-header">
+          <h3>Antrean</h3>
+          <button class="close-queue" onclick="toggleQueue()">✕</button>
+        </div>
+        <div class="queue-section-title">Sekarang memutar</div>
+        <div id="queueNowPlaying">
+          <p style="font-size: 12px; color: var(--text-muted); padding: 0 8px;">Belum ada lagu yang diputar</p>
+        </div>
+        <div class="queue-section-title" style="margin-top: 24px;">Berikutnya</div>
+        <div id="queueNextList">
+          <p style="font-size: 12px; color: var(--text-muted); padding: 0 8px;">Antrean kosong</p>
+        </div>
+      </aside>
+
+    </main>
+
+    <!-- ===== NOW PLAYING BAR (BOTTOM) ===== -->
+    <div class="now-playing-bar" id="globalNowPlaying">
+      <div class="np-track">
+        <div class="np-album-art" id="npAlbumArt">
+          <span id="npEmoji">🎵</span>
+        </div>
+        <div class="np-info">
+          <div class="np-title" id="npTitle">Pilih lagu dulu</div>
+          <div class="np-artist" id="npArtist">—</div>
+        </div>
+        <div class="np-heart" id="npHeart" onclick="toggleLike()">♥</div>
+      </div>
+      <div class="np-controls">
+        <button class="np-btn" title="Shuffle">⇄</button>
+        <button class="np-btn" title="Previous" onclick="playPrev()">⏮</button>
+        <button class="np-btn np-play" id="npPlayBtn" onclick="togglePlay()">▶</button>
+        <button class="np-btn" title="Next" onclick="playNext()">⏭</button>
+        <button class="np-btn" title="Repeat">↻</button>
+      </div>
+      <div class="np-volume">
+        <button class="np-btn" title="Lirik" onclick="toggleLyrics()" id="btnLyrics">🎤</button>
+        <button class="np-btn" title="Antrean" onclick="toggleQueue()">☰</button>
+        <span>🔊</span>
+        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80" oninput="setVolume(this.value)" />
+      </div>
+    </div>
+
+    <!-- Mobile Sidebar Toggle -->
+    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">☰</button>
+
+    <script src="app.js"></script>
+  </body>
+</html>
