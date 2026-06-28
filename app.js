@@ -463,7 +463,11 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
   updateNowPlayingBar(trackName, artistName, artworkUrl, genre);
 
   // Coba YouTube via Invidious API
-  const query = `${trackName} ${artistName} official audio`;
+  // Using quotes around trackName and artistName ensures YouTube search 
+  // is stricter and doesn't return a completely different popular song
+  const safeTrackName = trackName.replace(/"/g, '');
+  const safeArtistName = artistName.replace(/"/g, '');
+  const query = `"${safeTrackName}" "${safeArtistName}"`;
   const videoId = await getYouTubeVideoId(query);
 
   if (videoId) {
