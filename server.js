@@ -1,14 +1,11 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { execFile } = require('child_process');
+const ytSearch = require('yt-search');
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-// Path ke yt-dlp (terinstall via pip)
-const YTDLP_PATH = 'C:\\Users\\Latitude User\\AppData\\Roaming\\Python\\Python314\\Scripts\\yt-dlp.exe';
-
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
 
   // CORS Headers
@@ -21,7 +18,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // API Route: cari YouTube video ID via yt-dlp
+  // API Route: cari YouTube video ID via yt-search
   if (url.pathname === '/api/search-youtube') {
     const query = url.searchParams.get('q');
     if (!query) {
@@ -30,25 +27,21 @@ const server = http.createServer((req, res) => {
       return;
     }
 
-    const args = [
-      '--get-id',
-      '--no-playlist',
-      '--no-warnings',
-      '--quiet',
-      `ytsearch1:${query}`
-    ];
-
-    execFile(YTDLP_PATH, args, { timeout: 15000 }, (err, stdout) => {
-      const videoId = stdout.trim();
-      if (!err && videoId && videoId.length === 11) {
+    try {
+      const result = await ytSearch(query);
+      const videos = result.videos;
+      if (videos && videos.length > 0) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ videoId }));
+        res.end(JSON.stringify({ videoId: videos[0].videoId }));
       } else {
-        console.error('yt-dlp error:', err?.message);
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Video not found' }));
       }
-    });
+    } catch (err) {
+      console.error('yt-search error:', err?.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Internal server error' }));
+    }
     return;
   }
 

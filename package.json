@@ -1,0 +1,24 @@
+{
+  "name": "mood-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Adlymusyaffatibr/spotify-mini.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Adlymusyaffatibr/spotify-mini/issues"
+  },
+  "homepage": "https://github.com/Adlymusyaffatibr/spotify-mini#readme",
+  "dependencies": {
+    "yt-search": "^2.13.1"
+  }
+}
