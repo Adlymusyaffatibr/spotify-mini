@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/Adlymusyaffatibr/spotify-mini#readme",
   "dependencies": {
+    "@distube/ytdl-core": "^4.16.12",
     "yt-search": "^2.13.1"
   }
 }

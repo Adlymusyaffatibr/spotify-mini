@@ -2,6 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const ytSearch = require('yt-search');
+const ytdl = require('@distube/ytdl-core');
 
 const PORT = process.env.PORT || 3000;
 
@@ -41,6 +42,35 @@ const server = http.createServer(async (req, res) => {
       console.error('yt-search error:', err?.message);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Internal server error' }));
+    }
+    return;
+  }
+
+  // API Route: stream YouTube audio
+  if (url.pathname === '/api/stream') {
+    const videoId = url.searchParams.get('id');
+    if (!videoId) {
+      res.writeHead(400);
+      res.end('Missing video id');
+      return;
+    }
+    try {
+      const info = await ytdl.getInfo(videoId);
+      const format = ytdl.chooseFormat(info.formats, { quality: 'highestaudio', filter: 'audioonly' });
+      if (!format) {
+        res.writeHead(404);
+        res.end('Audio format not found');
+        return;
+      }
+      res.writeHead(200, {
+        'Content-Type': 'audio/mpeg',
+        'Transfer-Encoding': 'chunked'
+      });
+      ytdl(videoId, { format: format }).pipe(res);
+    } catch (e) {
+      console.error('Stream error:', e);
+      res.writeHead(500);
+      res.end('Stream error');
     }
     return;
   }
