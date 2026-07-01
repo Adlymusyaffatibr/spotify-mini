@@ -535,10 +535,27 @@ function updateNowPlayingBar(trackName, artistName, artworkUrl, genre) {
   }
 }
 
+// Add a silent audio to keep the session alive on mobile
+let silentAudio = null;
+function initSilentAudio() {
+  if (!silentAudio) {
+    silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+    silentAudio.loop = true;
+  }
+}
+
 function setPlayState(playing) {
   window.isPlaying = playing;
   const btn = document.getElementById('npPlayBtn');
   if (btn) btn.textContent = playing ? '⏸' : '▶';
+
+  // Manage silent audio for background playback
+  if (playing) {
+    initSilentAudio();
+    silentAudio.play().catch(e => console.log("Silent audio play blocked:", e));
+  } else if (silentAudio) {
+    silentAudio.pause();
+  }
 }
 
 function togglePlay() {
