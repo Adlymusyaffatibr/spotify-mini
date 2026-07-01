@@ -68,9 +68,6 @@ function setupKeyboard() {
   const audioPlayer = document.getElementById('audioPlayer');
   if (audioPlayer) {
     audioPlayer.addEventListener('ended', playNext);
-    audioPlayer.addEventListener('timeupdate', () => {
-      window.currentPlaybackTime = audioPlayer.currentTime;
-    });
   }
 
   window.addEventListener('message', (e) => {
@@ -474,19 +471,19 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
   const videoId = await getYouTubeVideoId(query);
 
   if (videoId) {
-    window.currentPlayingType = 'audio';
+    window.currentPlayingType = 'youtube';
     if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName}`;
-    
-    // Gunakan audio tag dengan proxy stream dari backend
-    audioPlayer.src = `/api/stream?id=${videoId}`;
-    audioPlayer.style.display = 'block';
-    
-    // Set initial volume
-    const vol = document.getElementById('volumeSlider') ? document.getElementById('volumeSlider').value : 80;
-    audioPlayer.volume = vol / 100;
-    
-    audioPlayer.play().catch(e => console.error('Audio play error:', e));
+    youtubePlayer.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&enablejsapi=1`;
+    youtubePlayer.style.display = 'block';
     setPlayState(true);
+    
+    setTimeout(() => {
+      const vol = document.getElementById('volumeSlider') ? document.getElementById('volumeSlider').value : 80;
+      if (youtubePlayer.contentWindow) {
+        youtubePlayer.contentWindow.postMessage(JSON.stringify({event: "command", func: "setVolume", args: [vol]}), '*');
+        youtubePlayer.contentWindow.postMessage(JSON.stringify({event: 'listening', id: 1}), '*');
+      }
+    }, 2000);
   } else {
     window.currentPlayingType = 'audio';
     // Fallback: iTunes preview (30 detik)
@@ -546,8 +543,17 @@ function setPlayState(playing) {
 
 function togglePlay() {
   const audio = document.getElementById('audioPlayer');
+  const yt = document.getElementById('youtubePlayer');
 
-  if (audio && audio.src) {
+  if (window.currentPlayingType === 'youtube' && yt && yt.contentWindow) {
+    if (window.isPlaying) {
+      yt.contentWindow.postMessage(JSON.stringify({event: "command", func: "pauseVideo", args: ""}), '*');
+      setPlayState(false);
+    } else {
+      yt.contentWindow.postMessage(JSON.stringify({event: "command", func: "playVideo", args: ""}), '*');
+      setPlayState(true);
+    }
+  } else if (window.currentPlayingType === 'audio' && audio && audio.src) {
     if (window.isPlaying) {
       audio.pause();
       setPlayState(false);
@@ -561,6 +567,11 @@ function togglePlay() {
 function setVolume(val) {
   const audio = document.getElementById('audioPlayer');
   if (audio) audio.volume = val / 100;
+  
+  const yt = document.getElementById('youtubePlayer');
+  if (yt && yt.contentWindow && window.currentPlayingType === 'youtube') {
+    yt.contentWindow.postMessage(JSON.stringify({event: "command", func: "setVolume", args: [val]}), '*');
+  }
 }
 
 function toggleLike() {
