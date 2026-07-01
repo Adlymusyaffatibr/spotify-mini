@@ -515,6 +515,24 @@ function updateNowPlayingBar(trackName, artistName, artworkUrl, genre) {
       npAlbumArt.innerHTML = `<span id="npEmoji">${getGenreEmoji(genre)}</span>`;
     }
   }
+
+  // Update Media Session API for background playback & lockscreen controls
+  if ('mediaSession' in navigator) {
+    const art = artworkUrl ? artworkUrl.replace('60x60', '512x512').replace('100x100', '512x512') : 'https://via.placeholder.com/512';
+    navigator.mediaSession.metadata = new window.MediaMetadata({
+      title: trackName,
+      artist: artistName,
+      album: 'MoodTunes',
+      artwork: [
+        { src: art, sizes: '512x512', type: 'image/jpeg' }
+      ]
+    });
+
+    navigator.mediaSession.setActionHandler('play', togglePlay);
+    navigator.mediaSession.setActionHandler('pause', togglePlay);
+    navigator.mediaSession.setActionHandler('previoustrack', playPrev);
+    navigator.mediaSession.setActionHandler('nexttrack', playNext);
+  }
 }
 
 function setPlayState(playing) {
