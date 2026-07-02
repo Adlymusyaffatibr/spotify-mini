@@ -2,9 +2,21 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="description" content="Mood Music App — Scan mood kamu dan dapet playlist yang pas!" />
-    <title>Mood Music 🎧</title>
+    <title>MoodTunes 🎧</title>
+
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#1DB954" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- Apple PWA Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="MoodTunes" />
+    <link rel="apple-touch-icon" href="/icon-512.png" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Circular+Std:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -248,6 +260,21 @@
 
     <!-- Mobile Sidebar Toggle -->
     <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">☰</button>
+
+    <!-- PWA Install Banner -->
+    <div class="pwa-install-banner" id="pwaInstallBanner">
+      <div class="pwa-install-content">
+        <div class="pwa-install-icon">🎧</div>
+        <div class="pwa-install-text">
+          <strong>Install MoodTunes</strong>
+          <span>Dengerin musik tanpa buka browser!</span>
+        </div>
+      </div>
+      <div class="pwa-install-actions">
+        <button class="pwa-install-btn" id="pwaInstallBtn" onclick="installPWA()">Install</button>
+        <button class="pwa-dismiss-btn" onclick="dismissInstallBanner()">Nanti</button>
+      </div>
+    </div>
 
     <script src="app.js"></script>
   </body>

@@ -1,0 +1,19 @@
+{
+  "name": "MoodTunes - Musik Sesuai Mood",
+  "short_name": "MoodTunes",
+  "description": "Scan mood kamu dan dapet playlist yang pas! Dengerin musik tanpa harus buka browser.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0e17",
+  "theme_color": "#1DB954",
+  "orientation": "portrait",
+  "categories": ["music", "entertainment"],
+  "icons": [
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

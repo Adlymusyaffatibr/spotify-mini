@@ -842,3 +842,72 @@ function playArtistTopTracks() {
   playSongFromArtist(0);
 }
 
+// ============================================================
+//  PWA — Service Worker & Install Prompt
+// ============================================================
+window.deferredInstallPrompt = null;
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((reg) => {
+        console.log('[PWA] Service Worker registered, scope:', reg.scope);
+      })
+      .catch((err) => {
+        console.warn('[PWA] Service Worker registration failed:', err);
+      });
+  });
+}
+
+// Listen for beforeinstallprompt (Chrome/Edge/Samsung)
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  window.deferredInstallPrompt = e;
+
+  // Don't show banner if dismissed recently
+  const dismissed = localStorage.getItem('pwa-install-dismissed');
+  if (dismissed) {
+    const elapsed = Date.now() - parseInt(dismissed);
+    if (elapsed < 3 * 24 * 60 * 60 * 1000) return; // 3 days cooldown
+  }
+
+  // Show install banner
+  const banner = document.getElementById('pwaInstallBanner');
+  if (banner) {
+    setTimeout(() => {
+      banner.classList.add('visible');
+    }, 2000); // Show after 2 seconds
+  }
+});
+
+function installPWA() {
+  const prompt = window.deferredInstallPrompt;
+  if (!prompt) {
+    // Fallback: show manual instructions
+    alert('Untuk install MoodTunes:\n\n📱 Android: Tap menu (⋮) → "Add to Home Screen"\n🍎 iPhone: Tap Share (↑) → "Add to Home Screen"');
+    return;
+  }
+
+  prompt.prompt();
+  prompt.userChoice.then((result) => {
+    if (result.outcome === 'accepted') {
+      console.log('[PWA] App installed!');
+    }
+    window.deferredInstallPrompt = null;
+    dismissInstallBanner();
+  });
+}
+
+function dismissInstallBanner() {
+  const banner = document.getElementById('pwaInstallBanner');
+  if (banner) banner.classList.remove('visible');
+  localStorage.setItem('pwa-install-dismissed', Date.now().toString());
+}
+
+// Track when app is installed
+window.addEventListener('appinstalled', () => {
+  console.log('[PWA] MoodTunes installed successfully!');
+  window.deferredInstallPrompt = null;
+  dismissInstallBanner();
+});

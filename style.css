@@ -1361,3 +1361,112 @@ body {
   .search-bar-wrapper { padding: 4px 4px 4px 16px; }
   .btn-search { padding: 8px 16px; font-size: 12px; }
 }
+
+/* ============================================================
+   PWA INSTALL BANNER
+   ============================================================ */
+.pwa-install-banner {
+  position: fixed;
+  bottom: 80px; /* Above now playing bar */
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  width: calc(100% - 32px);
+  max-width: 400px;
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.pwa-install-banner.visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  visibility: visible;
+}
+
+.pwa-install-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pwa-install-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--bg-highlight);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.pwa-install-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pwa-install-text strong {
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.pwa-install-text span {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.pwa-install-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pwa-install-btn {
+  flex: 1;
+  background: var(--sp-green);
+  color: #000;
+  border: none;
+  border-radius: 20px;
+  padding: 10px;
+  font-weight: 700;
+  font-family: 'Circular Std', 'Inter', sans-serif;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.pwa-install-btn:hover {
+  background: #1ed760;
+  transform: scale(1.02);
+}
+
+.pwa-dismiss-btn {
+  flex: 1;
+  background: rgba(255,255,255,0.1);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 20px;
+  padding: 10px;
+  font-weight: 600;
+  font-family: 'Circular Std', 'Inter', sans-serif;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.pwa-dismiss-btn:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+@media (max-width: 680px) {
+  .pwa-install-banner {
+    bottom: 74px; /* Adjust for mobile bottom bar */
+  }
+}
