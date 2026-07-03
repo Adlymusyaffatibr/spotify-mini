@@ -471,8 +471,48 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
   const videoId = await getYouTubeVideoId(query);
 
   if (videoId) {
+    if (nowPlayingText) nowPlayingText.textContent = `⏳ Memuat stream...`;
+    
+    // Coba ambil direct audio URL dari API Piped (Proxy) agar bisa play di background
+    try {
+      const pRes = await fetch(`https://pipedapi.kavin.rocks/streams/${videoId}`);
+      const pData = await pRes.json();
+      if (pData && pData.audioStreams && pData.audioStreams.length > 0) {
+        const bestAudio = pData.audioStreams.find(s => s.mimeType.startsWith('audio/webm') && s.quality === 'MEDIUM') || pData.audioStreams[0];
+        
+        window.currentPlayingType = 'audio'; // Kita pakai audio element sekarang
+        if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName}`;
+        
+        audioPlayer.src = bestAudio.url;
+        audioPlayer.style.display = 'block';
+        audioPlayer.play();
+        setPlayState(true);
+        return;
+      }
+    } catch (e) {
+      console.warn("Piped API gagal, mencoba fallback...", e);
+    }
+
+    // Fallback ke API kita sendiri jika Piped API down
+    try {
+      const yRes = await fetch(`/api/get-audio-url?videoId=${videoId}`);
+      const yData = await yRes.json();
+      if (yData && yData.url) {
+        window.currentPlayingType = 'audio';
+        if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName}`;
+        audioPlayer.src = yData.url;
+        audioPlayer.style.display = 'block';
+        audioPlayer.play();
+        setPlayState(true);
+        return;
+      }
+    } catch (e) {
+      console.warn("Fallback API gagal", e);
+    }
+
+    // Jika semua direct stream gagal, fallback ke iframe (tidak akan jalan di background)
     window.currentPlayingType = 'youtube';
-    if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName}`;
+    if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName} (Iframe Mode)`;
     youtubePlayer.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&enablejsapi=1`;
     youtubePlayer.style.display = 'block';
     setPlayState(true);
