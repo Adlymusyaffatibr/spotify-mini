@@ -473,44 +473,29 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
   if (videoId) {
     if (nowPlayingText) nowPlayingText.textContent = `⏳ Memuat stream...`;
     
-    // Coba ambil direct audio URL dari API Piped (Proxy) agar bisa play di background
+    window.currentPlayingType = 'audio';
+    
+    // Gunakan server lokal kita sebagai proxy stream
+    // Ini memastikan lagunya tetap jalan di background tanpa masalah CORS atau error Piped API
+    const streamUrl = `/api/stream-audio?videoId=${videoId}`;
+    
+    // Test the stream first to see if backend proxy works
     try {
-      const pRes = await fetch(`https://pipedapi.kavin.rocks/streams/${videoId}`);
-      const pData = await pRes.json();
-      if (pData && pData.audioStreams && pData.audioStreams.length > 0) {
-        const bestAudio = pData.audioStreams.find(s => s.mimeType.startsWith('audio/webm') && s.quality === 'MEDIUM') || pData.audioStreams[0];
-        
-        window.currentPlayingType = 'audio'; // Kita pakai audio element sekarang
+      const res = await fetch(`/api/get-audio-url?videoId=${videoId}`);
+      if (res.ok) {
         if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName}`;
-        
-        audioPlayer.src = bestAudio.url;
+        audioPlayer.src = streamUrl;
         audioPlayer.style.display = 'block';
-        audioPlayer.play();
+        audioPlayer.play().catch(e => console.error("Audio play error:", e));
         setPlayState(true);
         return;
       }
     } catch (e) {
-      console.warn("Piped API gagal, mencoba fallback...", e);
+      console.warn("Backend API tidak berjalan", e);
     }
 
-    // Fallback ke API kita sendiri jika Piped API down
-    try {
-      const yRes = await fetch(`/api/get-audio-url?videoId=${videoId}`);
-      const yData = await yRes.json();
-      if (yData && yData.url) {
-        window.currentPlayingType = 'audio';
-        if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName}`;
-        audioPlayer.src = yData.url;
-        audioPlayer.style.display = 'block';
-        audioPlayer.play();
-        setPlayState(true);
-        return;
-      }
-    } catch (e) {
-      console.warn("Fallback API gagal", e);
-    }
-
-    // Jika semua direct stream gagal, fallback ke iframe (tidak akan jalan di background)
+    // Jika backend proxy gagal (misalnya jalankan lewat file:// atau Live Server tanpa Node),
+    // fallback ke iframe
     window.currentPlayingType = 'youtube';
     if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName} (Iframe Mode)`;
     youtubePlayer.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&enablejsapi=1`;
