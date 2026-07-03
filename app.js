@@ -475,16 +475,14 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
     
     window.currentPlayingType = 'audio';
     
-    // Gunakan server lokal kita sebagai proxy stream
-    // Ini memastikan lagunya tetap jalan di background tanpa masalah CORS atau error Piped API
-    const streamUrl = `/api/stream-audio?videoId=${videoId}`;
-    
-    // Test the stream first to see if backend proxy works
+    // Coba dapatkan direct URL dari backend kita
+    // Direct URL mendukung byte-range request yang diwajibkan browser HP untuk background audio
     try {
       const res = await fetch(`/api/get-audio-url?videoId=${videoId}`);
       if (res.ok) {
+        const data = await res.json();
         if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName}`;
-        audioPlayer.src = streamUrl;
+        audioPlayer.src = data.url;
         audioPlayer.style.display = 'block';
         audioPlayer.play().catch(e => console.error("Audio play error:", e));
         setPlayState(true);
