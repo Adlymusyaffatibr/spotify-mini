@@ -472,46 +472,48 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
   if (videoId) {
     if (nowPlayingText) nowPlayingText.textContent = `⏳ Memuat stream...`;
     window.currentPlayingType = 'audio';
-    
-    let streamSuccess = false;
 
-    try {
-      // Cek dengan fetch untuk memastikan server bisa melakukan stream (bukan error 500)
-      const res = await fetch(`/api/stream-audio?videoId=${videoId}`);
-      
-      if (res.ok) {
-        if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName}`;
-        audioPlayer.src = `/api/stream-audio?videoId=${videoId}`;
-        audioPlayer.style.display = 'block';
-        
-        await audioPlayer.play();
-        setPlayState(true);
-        streamSuccess = true;
-      } else {
-        console.warn("Backend proxy stream error (kemungkinan YouTube memblokir akses). Status:", res.status);
-      }
-    } catch (e) {
-      console.warn("Tidak dapat mengakses backend proxy:", e);
+    // Langsung set src ke /api/stream-audio (akan redirect 302 ke URL audio YouTube).
+    // Pendekatan ini menghindari timeout di Vercel karena tidak ada streaming proxy —
+    // browser yang langsung fetch URL audio dari YouTube.
+    audioPlayer.src = `/api/stream-audio?videoId=${videoId}`;
+    audioPlayer.style.display = 'block';
+
+    // Hapus error listener lama jika ada
+    if (audioPlayer._streamErrorHandler) {
+      audioPlayer.removeEventListener('error', audioPlayer._streamErrorHandler);
     }
 
-    if (streamSuccess) return; // Berhenti di sini jika stream sukses
+    // Jika audio gagal load (URL expired / diblokir YouTube), fallback ke YouTube Iframe
+    audioPlayer._streamErrorHandler = async () => {
+      console.warn('Audio stream gagal, fallback ke YouTube Iframe...');
+      audioPlayer.src = '';
+      audioPlayer.style.display = 'none';
 
-    // Jika gagal mendapatkan stream audio murni (biasanya karena update sekuriti YouTube),
-    // kita fallback menggunakan YouTube Iframe.
-    // Catatan: Iframe TIDAK bisa berjalan di background pada perangkat mobile.
-    window.currentPlayingType = 'youtube';
-    if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName} (Iframe Mode)`;
-    youtubePlayer.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&enablejsapi=1`;
-    youtubePlayer.style.display = 'block';
-    setPlayState(true);
-    
-    setTimeout(() => {
-      const vol = document.getElementById('volumeSlider') ? document.getElementById('volumeSlider').value : 80;
-      if (youtubePlayer.contentWindow) {
-        youtubePlayer.contentWindow.postMessage(JSON.stringify({event: "command", func: "setVolume", args: [vol]}), '*');
-        youtubePlayer.contentWindow.postMessage(JSON.stringify({event: 'listening', id: 1}), '*');
-      }
-    }, 2000);
+      window.currentPlayingType = 'youtube';
+      if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName} (Iframe Mode)`;
+      youtubePlayer.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&enablejsapi=1`;
+      youtubePlayer.style.display = 'block';
+      setPlayState(true);
+
+      setTimeout(() => {
+        const vol = document.getElementById('volumeSlider') ? document.getElementById('volumeSlider').value : 80;
+        if (youtubePlayer.contentWindow) {
+          youtubePlayer.contentWindow.postMessage(JSON.stringify({event: "command", func: "setVolume", args: [vol]}), '*');
+          youtubePlayer.contentWindow.postMessage(JSON.stringify({event: 'listening', id: 1}), '*');
+        }
+      }, 2000);
+    };
+    audioPlayer.addEventListener('error', audioPlayer._streamErrorHandler, { once: true });
+
+    try {
+      if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName}`;
+      await audioPlayer.play();
+      setPlayState(true);
+    } catch (e) {
+      console.warn('audioPlayer.play() gagal:', e);
+      // Error handler di atas akan handle fallback ke iframe
+    }
   } else {
     window.currentPlayingType = 'audio';
     // Fallback: iTunes preview (30 detik)
