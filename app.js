@@ -471,51 +471,34 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
 
   if (videoId) {
     if (nowPlayingText) nowPlayingText.textContent = `⏳ Memuat stream...`;
-    
     window.currentPlayingType = 'audio';
     
-    // Coba dapatkan direct URL dari backend kita
-    // Direct URL mendukung byte-range request yang diwajibkan browser HP untuk background audio
+    let streamSuccess = false;
+
     try {
-      const res = await fetch(`/api/get-audio-url?videoId=${videoId}`);
+      // Cek dengan fetch untuk memastikan server bisa melakukan stream (bukan error 500)
+      const res = await fetch(`/api/stream-audio?videoId=${videoId}`);
+      
       if (res.ok) {
-        const data = await res.json();
-        if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName}`;
-        
-        audioPlayer.src = data.url;
-        audioPlayer.style.display = 'block';
-        
-        try {
-          await audioPlayer.play();
-          setPlayState(true);
-          return; // Berhasil play direct URL
-        } catch (playErr) {
-          console.warn("Direct URL gagal diputar (mungkin 403/CORS), mencoba stream proxy...", playErr);
-          // Fallback ke proxy stream backend
-          audioPlayer.src = `/api/stream-audio?videoId=${videoId}`;
-          await audioPlayer.play();
-          setPlayState(true);
-          return; // Berhasil play via proxy
-        }
-      } else {
-        throw new Error("Direct URL response not ok");
-      }
-    } catch (e) {
-      console.warn("API get-audio-url bermasalah, mencoba proxy stream-audio", e);
-      try {
         if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName}`;
         audioPlayer.src = `/api/stream-audio?videoId=${videoId}`;
         audioPlayer.style.display = 'block';
+        
         await audioPlayer.play();
         setPlayState(true);
-        return; // Berhasil play via proxy
-      } catch (proxyErr) {
-        console.warn("Backend proxy API tidak berjalan", proxyErr);
+        streamSuccess = true;
+      } else {
+        console.warn("Backend proxy stream error (kemungkinan YouTube memblokir akses). Status:", res.status);
       }
+    } catch (e) {
+      console.warn("Tidak dapat mengakses backend proxy:", e);
     }
 
-    // Jika semua metode audio tag gagal (misalnya jalankan lewat file:// atau Live Server tanpa Node),
-    // fallback ke iframe (TIDAK BISA BACKGROUND PLAY DI HP)
+    if (streamSuccess) return; // Berhenti di sini jika stream sukses
+
+    // Jika gagal mendapatkan stream audio murni (biasanya karena update sekuriti YouTube),
+    // kita fallback menggunakan YouTube Iframe.
+    // Catatan: Iframe TIDAK bisa berjalan di background pada perangkat mobile.
     window.currentPlayingType = 'youtube';
     if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName} (Iframe Mode)`;
     youtubePlayer.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&enablejsapi=1`;

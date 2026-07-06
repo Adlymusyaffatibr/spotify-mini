@@ -52,6 +52,16 @@ app.get('/api/stream-audio', async (req, res) => {
   try {
     const stream = ytdl(videoId, { filter: 'audioonly', quality: 'highestaudio' });
     res.setHeader('Content-Type', 'audio/webm');
+    
+    stream.on('error', (err) => {
+      console.error('Stream error:', err.message);
+      if (!res.headersSent) {
+        res.status(500).send('Stream error');
+      } else {
+        res.end();
+      }
+    });
+
     stream.pipe(res);
   } catch (error) {
     res.status(500).send(error.message);
