@@ -462,12 +462,11 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
   if (nowPlayingText) nowPlayingText.textContent = `⏳ Mencari "${trackName}"...`;
   updateNowPlayingBar(trackName, artistName, artworkUrl, genre);
 
-  // Coba YouTube via Invidious API
-  // Using quotes around trackName and artistName ensures YouTube search 
-  // is stricter and doesn't return a completely different popular song
+  // Coba YouTube search
   const safeTrackName = trackName.replace(/"/g, '');
   const safeArtistName = artistName.replace(/"/g, '');
-  const query = `"${safeTrackName}" "${safeArtistName}"`;
+  // Tanpa tanda kutip agar pencarian lebih luas dan tidak mengembalikan 0 result (yang menyebabkan fallback ke preview 30 detik)
+  const query = `${safeTrackName} ${safeArtistName} audio`;
   const videoId = await getYouTubeVideoId(query);
 
   if (videoId) {
