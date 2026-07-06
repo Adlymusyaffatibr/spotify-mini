@@ -1,32 +1,85 @@
-const ytdl = require('@distube/ytdl-core');
+/**
+ * Vercel Edge Function — Audio Stream Proxy
+ *
+ * Mengapa Edge Function?
+ * - Tidak ada batas waktu eksekusi untuk streaming (berbeda dengan Serverless 10-60 detik)
+ * - Audio datang dari domain kita sendiri (same-origin) → background playback di mobile berfungsi
+ * - Forward Range requests → seeking berfungsi
+ *
+ * Cara kerja:
+ * 1. app.js memanggil /api/get-audio-url?videoId=xxx untuk mendapat URL audio YouTube
+ * 2. app.js set audioPlayer.src = /api/stream-audio?url=encodedYoutubeUrl
+ * 3. Edge Function ini memproxy audio dari YouTube ke browser — same-origin
+ */
+export const config = { runtime: 'edge' };
 
-module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  if (req.method === 'OPTIONS') return res.status(200).end();
+export default async function handler(req) {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Range',
+      },
+    });
+  }
 
-  const { videoId } = req.query;
-  if (!videoId) return res.status(400).json({ error: 'Missing videoId' });
+  const { searchParams } = new URL(req.url);
+  const encodedUrl = searchParams.get('url');
+
+  if (!encodedUrl) {
+    return new Response('Missing url parameter', { status: 400 });
+  }
+
+  let targetUrl;
+  try {
+    targetUrl = decodeURIComponent(encodedUrl);
+    // Validasi URL agar tidak bisa digunakan sebagai open proxy sembarangan
+    const parsed = new URL(targetUrl);
+    const allowedHosts = ['googlevideo.com', 'youtube.com', 'ytimg.com', 'ggpht.com'];
+    if (!allowedHosts.some((h) => parsed.hostname.endsWith(h))) {
+      return new Response('URL not allowed', { status: 403 });
+    }
+  } catch {
+    return new Response('Invalid url parameter', { status: 400 });
+  }
 
   try {
-    const info = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videoId}`);
-    
-    // Pilih format audio terbaik (prioritas: opus/webm > m4a > yang lain)
-    const formats = info.formats.filter(f => f.hasAudio && !f.hasVideo);
-    formats.sort((a, b) => (b.audioBitrate || 0) - (a.audioBitrate || 0));
-    
-    const format = formats[0] || ytdl.chooseFormat(info.formats, { quality: 'highestaudio', filter: 'audioonly' });
-    
-    if (!format || !format.url) {
-      return res.status(500).json({ error: 'No audio format found' });
-    }
+    // Forward Range header supaya seeking berfungsi
+    const fetchHeaders = {
+      'User-Agent':
+        'Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+      'Referer': 'https://www.youtube.com/',
+      'Origin': 'https://www.youtube.com',
+    };
+    const range = req.headers.get('Range');
+    if (range) fetchHeaders['Range'] = range;
 
-    // Redirect langsung ke URL audio YouTube
-    // Browser akan stream sendiri tanpa melewati Vercel (tidak ada timeout)
-    res.setHeader('Cache-Control', 'no-store');
-    return res.redirect(302, format.url);
-  } catch (error) {
-    console.error('stream-audio error:', error.message);
-    return res.status(500).json({ error: error.message });
+    const audioRes = await fetch(targetUrl, { headers: fetchHeaders });
+
+    // Susun response headers
+    const responseHeaders = {
+      'Content-Type': audioRes.headers.get('Content-Type') || 'audio/webm; codecs=opus',
+      'Accept-Ranges': 'bytes',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Expose-Headers': 'Content-Length, Content-Range, Accept-Ranges',
+      // Jangan cache di browser, URL YouTube sudah bisa expire
+      'Cache-Control': 'no-store',
+    };
+
+    const contentLength = audioRes.headers.get('Content-Length');
+    if (contentLength) responseHeaders['Content-Length'] = contentLength;
+
+    const contentRange = audioRes.headers.get('Content-Range');
+    if (contentRange) responseHeaders['Content-Range'] = contentRange;
+
+    return new Response(audioRes.body, {
+      status: audioRes.status,
+      headers: responseHeaders,
+    });
+  } catch (err) {
+    return new Response('Proxy error: ' + err.message, { status: 502 });
   }
-};
+}

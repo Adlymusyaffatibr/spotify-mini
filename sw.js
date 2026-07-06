@@ -42,6 +42,7 @@ self.addEventListener('fetch', (event) => {
     url.pathname.startsWith('/api/') ||
     url.hostname.includes('itunes.apple.com') ||
     url.hostname.includes('youtube.com') ||
+    url.hostname.includes('googlevideo.com') ||
     url.hostname.includes('lrclib.net') ||
     url.hostname.includes('invidious')
   ) {

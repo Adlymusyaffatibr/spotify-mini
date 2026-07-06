@@ -470,49 +470,62 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
   const videoId = await getYouTubeVideoId(query);
 
   if (videoId) {
-    if (nowPlayingText) nowPlayingText.textContent = `⏳ Memuat stream...`;
     window.currentPlayingType = 'audio';
-
-    // Langsung set src ke /api/stream-audio (akan redirect 302 ke URL audio YouTube).
-    // Pendekatan ini menghindari timeout di Vercel karena tidak ada streaming proxy —
-    // browser yang langsung fetch URL audio dari YouTube.
-    audioPlayer.src = `/api/stream-audio?videoId=${videoId}`;
-    audioPlayer.style.display = 'block';
 
     // Hapus error listener lama jika ada
     if (audioPlayer._streamErrorHandler) {
       audioPlayer.removeEventListener('error', audioPlayer._streamErrorHandler);
     }
 
-    // Jika audio gagal load (URL expired / diblokir YouTube), fallback ke YouTube Iframe
-    audioPlayer._streamErrorHandler = async () => {
+    // Helper: fallback ke YouTube Iframe jika audio gagal
+    const fallbackToIframe = () => {
       console.warn('Audio stream gagal, fallback ke YouTube Iframe...');
       audioPlayer.src = '';
       audioPlayer.style.display = 'none';
-
       window.currentPlayingType = 'youtube';
       if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName} (Iframe Mode)`;
       youtubePlayer.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&enablejsapi=1`;
       youtubePlayer.style.display = 'block';
       setPlayState(true);
-
       setTimeout(() => {
-        const vol = document.getElementById('volumeSlider') ? document.getElementById('volumeSlider').value : 80;
+        const vol = document.getElementById('volumeSlider')?.value ?? 80;
         if (youtubePlayer.contentWindow) {
-          youtubePlayer.contentWindow.postMessage(JSON.stringify({event: "command", func: "setVolume", args: [vol]}), '*');
-          youtubePlayer.contentWindow.postMessage(JSON.stringify({event: 'listening', id: 1}), '*');
+          youtubePlayer.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [vol] }), '*');
+          youtubePlayer.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1 }), '*');
         }
       }, 2000);
     };
-    audioPlayer.addEventListener('error', audioPlayer._streamErrorHandler, { once: true });
 
     try {
+      // ── Langkah 1: Ambil URL audio langsung dari YouTube via Node.js function ──
+      // (get-audio-url menggunakan @distube/ytdl-core, mendapat signed URL YouTube CDN)
+      if (nowPlayingText) nowPlayingText.textContent = `⏳ Mengambil stream...`;
+      const urlRes = await fetch(`/api/get-audio-url?videoId=${videoId}`);
+
+      if (!urlRes.ok) throw new Error(`get-audio-url HTTP ${urlRes.status}`);
+      const { url: youtubeAudioUrl } = await urlRes.json();
+      if (!youtubeAudioUrl) throw new Error('No audio URL returned');
+
+      // ── Langkah 2: Stream lewat Edge Function proxy (same-origin) ──
+      // Mengapa lewat proxy dan bukan langsung?
+      // → URL YouTube CDN bersifat cross-origin. Browser mobile MENGHENTIKAN audio
+      //   cross-origin saat layar terkunci. Dengan proxy Edge Function, audio datang
+      //   dari domain kita sendiri → background playback berfungsi seperti Spotify.
+      const proxyUrl = `/api/stream-audio?url=${encodeURIComponent(youtubeAudioUrl)}`;
+
+      audioPlayer._streamErrorHandler = fallbackToIframe;
+      audioPlayer.addEventListener('error', audioPlayer._streamErrorHandler, { once: true });
+
+      audioPlayer.src = proxyUrl;
+      audioPlayer.style.display = 'block';
+
       if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName}`;
       await audioPlayer.play();
       setPlayState(true);
+
     } catch (e) {
-      console.warn('audioPlayer.play() gagal:', e);
-      // Error handler di atas akan handle fallback ke iframe
+      console.warn('Stream setup gagal, fallback ke iframe:', e.message);
+      fallbackToIframe();
     }
   } else {
     window.currentPlayingType = 'audio';
