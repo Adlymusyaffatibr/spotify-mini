@@ -482,18 +482,41 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
       if (res.ok) {
         const data = await res.json();
         if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName}`;
+        
         audioPlayer.src = data.url;
         audioPlayer.style.display = 'block';
-        audioPlayer.play().catch(e => console.error("Audio play error:", e));
-        setPlayState(true);
-        return;
+        
+        try {
+          await audioPlayer.play();
+          setPlayState(true);
+          return; // Berhasil play direct URL
+        } catch (playErr) {
+          console.warn("Direct URL gagal diputar (mungkin 403/CORS), mencoba stream proxy...", playErr);
+          // Fallback ke proxy stream backend
+          audioPlayer.src = `/api/stream-audio?videoId=${videoId}`;
+          await audioPlayer.play();
+          setPlayState(true);
+          return; // Berhasil play via proxy
+        }
+      } else {
+        throw new Error("Direct URL response not ok");
       }
     } catch (e) {
-      console.warn("Backend API tidak berjalan", e);
+      console.warn("API get-audio-url bermasalah, mencoba proxy stream-audio", e);
+      try {
+        if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName}`;
+        audioPlayer.src = `/api/stream-audio?videoId=${videoId}`;
+        audioPlayer.style.display = 'block';
+        await audioPlayer.play();
+        setPlayState(true);
+        return; // Berhasil play via proxy
+      } catch (proxyErr) {
+        console.warn("Backend proxy API tidak berjalan", proxyErr);
+      }
     }
 
-    // Jika backend proxy gagal (misalnya jalankan lewat file:// atau Live Server tanpa Node),
-    // fallback ke iframe
+    // Jika semua metode audio tag gagal (misalnya jalankan lewat file:// atau Live Server tanpa Node),
+    // fallback ke iframe (TIDAK BISA BACKGROUND PLAY DI HP)
     window.currentPlayingType = 'youtube';
     if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName} (Iframe Mode)`;
     youtubePlayer.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&enablejsapi=1`;
