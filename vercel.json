@@ -1,22 +1,14 @@
 {
   "version": 2,
   "functions": {
+    "api/stream-audio.js": {
+      "maxDuration": 15
+    },
     "api/get-audio-url.js": {
-      "runtime": "nodejs20.x",
       "maxDuration": 15
     },
     "api/search-youtube.js": {
-      "runtime": "nodejs20.x",
       "maxDuration": 10
     }
-  },
-  "headers": [
-    {
-      "source": "/api/stream-audio",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET, OPTIONS" }
-      ]
-    }
-  ]
+  }
 }

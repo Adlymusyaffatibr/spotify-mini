@@ -68,6 +68,27 @@ function setupKeyboard() {
   const audioPlayer = document.getElementById('audioPlayer');
   if (audioPlayer) {
     audioPlayer.addEventListener('ended', playNext);
+
+    // Update posisi di lockscreen controls setiap detik saat audio berjalan
+    audioPlayer.addEventListener('timeupdate', () => {
+      if ('mediaSession' in navigator && audioPlayer.duration && isFinite(audioPlayer.duration)) {
+        try {
+          navigator.mediaSession.setPositionState({
+            duration: audioPlayer.duration,
+            playbackRate: audioPlayer.playbackRate || 1,
+            position: audioPlayer.currentTime || 0,
+          });
+        } catch (_) {}
+      }
+    });
+
+    // Sinkronkan playbackState saat audio di-pause/play dari kontrol browser bawaan
+    audioPlayer.addEventListener('play', () => {
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+    });
+    audioPlayer.addEventListener('pause', () => {
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+    });
   }
 
   window.addEventListener('message', (e) => {
@@ -497,26 +518,14 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
     };
 
     try {
-      // ── Langkah 1: Ambil URL audio langsung dari YouTube via Node.js function ──
-      // (get-audio-url menggunakan @distube/ytdl-core, mendapat signed URL YouTube CDN)
-      if (nowPlayingText) nowPlayingText.textContent = `⏳ Mengambil stream...`;
-      const urlRes = await fetch(`/api/get-audio-url?videoId=${videoId}`);
+      if (nowPlayingText) nowPlayingText.textContent = `⏳ Memuat stream...`;
 
-      if (!urlRes.ok) throw new Error(`get-audio-url HTTP ${urlRes.status}`);
-      const { url: youtubeAudioUrl } = await urlRes.json();
-      if (!youtubeAudioUrl) throw new Error('No audio URL returned');
-
-      // ── Langkah 2: Stream lewat Edge Function proxy (same-origin) ──
-      // Mengapa lewat proxy dan bukan langsung?
-      // → URL YouTube CDN bersifat cross-origin. Browser mobile MENGHENTIKAN audio
-      //   cross-origin saat layar terkunci. Dengan proxy Edge Function, audio datang
-      //   dari domain kita sendiri → background playback berfungsi seperti Spotify.
-      const proxyUrl = `/api/stream-audio?url=${encodeURIComponent(youtubeAudioUrl)}`;
-
+      // stream-audio melakukan redirect 302 ke signed URL audio YouTube CDN.
+      // Browser yang men-stream langsung → tidak ada timeout Vercel.
       audioPlayer._streamErrorHandler = fallbackToIframe;
       audioPlayer.addEventListener('error', audioPlayer._streamErrorHandler, { once: true });
 
-      audioPlayer.src = proxyUrl;
+      audioPlayer.src = `/api/stream-audio?videoId=${videoId}`;
       audioPlayer.style.display = 'block';
 
       if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName}`;
@@ -524,7 +533,7 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
       setPlayState(true);
 
     } catch (e) {
-      console.warn('Stream setup gagal, fallback ke iframe:', e.message);
+      console.warn('audioPlayer.play() gagal, fallback ke iframe:', e.message);
       fallbackToIframe();
     }
   } else {
@@ -582,6 +591,27 @@ function setPlayState(playing) {
   window.isPlaying = playing;
   const btn = document.getElementById('npPlayBtn');
   if (btn) btn.textContent = playing ? '⏸' : '▶';
+
+  // ── KUNCI background playback ──
+  // Tanpa playbackState = 'playing', Android TIDAK menampilkan lockscreen controls
+  // dan sistem bisa mematikan audio di background.
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
+  }
+
+  // Update progress bar di lockscreen (opsional tapi bikin tampilan lebih bagus)
+  if (playing && window.currentPlayingType === 'audio') {
+    const audio = document.getElementById('audioPlayer');
+    if (audio && audio.duration && isFinite(audio.duration) && 'mediaSession' in navigator) {
+      try {
+        navigator.mediaSession.setPositionState({
+          duration: audio.duration,
+          playbackRate: audio.playbackRate || 1,
+          position: audio.currentTime || 0,
+        });
+      } catch (_) {}
+    }
+  }
 }
 
 function togglePlay() {
