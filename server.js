@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const ytdl = require('@distube/ytdl-core');
+const youtubedl = require('youtube-dl-exec');
 const ytSearch = require('yt-search');
 const path = require('path');
 
@@ -36,9 +36,15 @@ app.get('/api/get-audio-url', async (req, res) => {
   if (!videoId) return res.status(400).json({ error: 'Missing videoId' });
 
   try {
-    const info = await ytdl.getInfo(videoId);
-    const format = ytdl.chooseFormat(info.formats, { quality: 'highestaudio' });
-    return res.status(200).json({ url: format.url });
+    const output = await youtubedl(`https://www.youtube.com/watch?v=${videoId}`, {
+      dumpJson: true,
+      noCheckCertificates: true,
+      noWarnings: true,
+      preferFreeFormats: true,
+      addHeader: ['referer:youtube.com', 'user-agent:googlebot'],
+      format: 'bestaudio'
+    });
+    return res.status(200).json({ url: output.url });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
@@ -50,19 +56,27 @@ app.get('/api/stream-audio', async (req, res) => {
   if (!videoId) return res.status(400).send('Missing videoId');
 
   try {
-    const stream = ytdl(videoId, { filter: 'audioonly', quality: 'highestaudio' });
-    res.setHeader('Content-Type', 'audio/webm');
-    
-    stream.on('error', (err) => {
-      console.error('Stream error:', err.message);
-      if (!res.headersSent) {
-        res.status(500).send('Stream error');
-      } else {
-        res.end();
-      }
+    const url = `https://www.youtube.com/watch?v=${videoId}`;
+    const subprocess = youtubedl.exec(url, {
+      output: '-',
+      format: 'bestaudio',
+      noCheckCertificates: true,
+      noWarnings: true,
+      preferFreeFormats: true,
+      addHeader: ['referer:youtube.com', 'user-agent:googlebot']
     });
+    
+    res.setHeader('Content-Type', 'audio/webm');
+    subprocess.stdout.pipe(res);
 
-    stream.pipe(res);
+    subprocess.on('error', (err) => {
+      console.error('Stream error:', err.message);
+      if (!res.headersSent) res.status(500).send('Stream error');
+    });
+    
+    req.on('close', () => {
+      try { subprocess.kill('SIGINT'); } catch (e) {}
+    });
   } catch (error) {
     res.status(500).send(error.message);
   }
