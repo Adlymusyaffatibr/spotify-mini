@@ -67,7 +67,10 @@ function setupKeyboard() {
   
   const audioPlayer = document.getElementById('audioPlayer');
   if (audioPlayer) {
-    audioPlayer.addEventListener('ended', playNext);
+    audioPlayer.addEventListener('ended', () => {
+      if (audioPlayer.src && audioPlayer.src.startsWith('data:audio/wav')) return;
+      playNext();
+    });
 
     // Update posisi di lockscreen controls setiap detik saat audio berjalan
     audioPlayer.addEventListener('timeupdate', () => {
