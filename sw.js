@@ -1,4 +1,4 @@
-const CACHE_NAME = 'moodtunes-v1';
+const CACHE_NAME = 'moodtunes-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -46,7 +46,7 @@ self.addEventListener('fetch', (event) => {
     url.hostname.includes('lrclib.net') ||
     url.hostname.includes('invidious')
   ) {
-    event.respondWith(fetch(event.request));
+    // Return undefined to let the browser handle it natively (bypasses SW)
     return;
   }
 
