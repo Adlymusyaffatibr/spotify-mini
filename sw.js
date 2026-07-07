@@ -1,4 +1,4 @@
-const CACHE_NAME = 'moodtunes-v3';
+const CACHE_NAME = 'moodtunes-v4';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

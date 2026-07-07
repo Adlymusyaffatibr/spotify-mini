@@ -42,7 +42,7 @@
   padding: 0;
 }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: hidden; max-width: 100vw; }
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -50,6 +50,7 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
+  max-width: 100vw;
   display: grid;
   grid-template-columns: var(--sidebar-width) 1fr;
   grid-template-rows: 1fr var(--np-bar-height);
@@ -1123,7 +1124,7 @@ body {
    QUEUE SIDEBAR
    ============================================================ */
 .queue-sidebar {
-  position: absolute;
+  position: fixed;
   top: 0;
   right: -320px;
   width: 320px;
@@ -1237,7 +1238,7 @@ body {
 @media (max-width: 680px) {
   body {
     grid-template-columns: 1fr;
-    grid-template-rows: 1fr 64px;
+    grid-template-rows: 1fr auto;
     grid-template-areas:
       "main"
       "nowplaying";
@@ -1247,7 +1248,7 @@ body {
     position: fixed;
     left: -260px;
     top: 0;
-    height: calc(100vh - 120px);
+    height: 100vh;
     width: 240px;
     z-index: 150;
     transition: left 0.3s ease;
@@ -1274,15 +1275,15 @@ body {
 
   .now-playing-bar {
     display: flex;
-    flex-wrap: nowrap;
-    height: 64px;
-    padding: 0 12px;
+    flex-direction: column;
+    height: auto;
+    padding: 16px;
+    gap: 16px;
     align-items: center;
-    justify-content: space-between;
   }
 
   .np-track {
-    width: auto;
+    width: 100%;
     flex: 1;
     margin-bottom: 0;
     overflow: hidden;
@@ -1295,25 +1296,21 @@ body {
 
   .np-controls {
     flex: unset;
-    justify-content: flex-end;
-    gap: 4px;
-  }
-
-  .np-controls .np-btn[title="Shuffle"],
-  .np-controls .np-btn[title="Previous"],
-  .np-controls .np-btn[title="Repeat"] {
-    display: none;
+    justify-content: space-between;
+    width: 100%;
+    gap: 8px;
+    padding: 0 10px;
   }
 
   .np-volume {
     display: flex;
-    justify-content: flex-end;
-    gap: 0;
+    justify-content: space-between;
+    width: 100%;
+    gap: 12px;
   }
-
-  .np-volume span,
-  .np-volume .volume-slider {
-    display: none;
+  
+  .volume-slider {
+    flex: 1;
   }
   
   .np-btn {
@@ -1323,9 +1320,9 @@ body {
   }
 
   .np-play {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
+    width: 44px;
+    height: 44px;
+    font-size: 16px;
   }
 
   #youtubePlayer { height: 200px; }
