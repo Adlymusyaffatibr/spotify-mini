@@ -464,10 +464,15 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
   const nowPlayingInline = document.getElementById('nowPlayingBar');
   const nowPlayingText = document.getElementById('nowPlaying');
 
-  // Reset audio
-  audioPlayer.pause();
-  audioPlayer.src = '';
+  // Agar app tidak di-suspend saat mencari lagu di background:
+  // Set silent audio dan play segera untuk mengunci user gesture di iOS/Android
+  audioPlayer.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
   audioPlayer.style.display = 'none';
+  audioPlayer.play().catch(() => {});
+  
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.playbackState = 'playing';
+  }
 
   // Reset YouTube
   youtubePlayer.src = '';
@@ -501,7 +506,8 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
     // Helper: fallback ke YouTube Iframe jika audio gagal
     const fallbackToIframe = () => {
       console.warn('Audio stream gagal, fallback ke YouTube Iframe...');
-      audioPlayer.src = '';
+      audioPlayer.pause();
+      audioPlayer.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
       audioPlayer.style.display = 'none';
       window.currentPlayingType = 'youtube';
       if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName} (Iframe Mode)`;
