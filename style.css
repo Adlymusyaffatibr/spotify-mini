@@ -374,6 +374,8 @@ body {
    ============================================================ */
 .search-container {
   margin-bottom: 28px;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .search-bar-wrapper {
@@ -385,7 +387,9 @@ body {
   border-radius: 30px;
   padding: 4px 8px 4px 20px;
   transition: var(--transition);
-  max-width: 580px;
+  max-width: 100%;
+  width: 580px;
+  box-sizing: border-box;
 }
 
 .search-bar-wrapper:focus-within {
@@ -436,8 +440,10 @@ body {
 /* Results Grid */
 .results-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 4px;
+  max-width: 100%;
+  width: 100%;
 }
 
 .song-item {
@@ -497,8 +503,9 @@ body {
 }
 
 .song-info {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
+  overflow: hidden;
 }
 
 .song-name {
@@ -682,6 +689,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0;
+  max-width: 100%;
+  width: 100%;
 }
 
 .playlist-header {
@@ -1022,7 +1031,7 @@ body {
 /* Artist track list row */
 .artist-track-item {
   display: grid;
-  grid-template-columns: 36px 44px 1fr auto auto;
+  grid-template-columns: 36px 44px minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 14px;
   padding: 8px 14px;
