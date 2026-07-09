@@ -212,8 +212,10 @@ body {
 .main-content {
   grid-area: main;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 0;
   position: relative;
+  min-width: 0;
 }
 
 /* Top Bar */
@@ -449,6 +451,8 @@ body {
   text-align: left;
   border: none;
   background: none;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .song-item:hover {
@@ -700,6 +704,8 @@ body {
   cursor: pointer;
   transition: var(--transition);
   animation: fadeUp 0.3s ease both;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .playlist-item:hover { background: var(--bg-card-hover); }
@@ -1350,7 +1356,7 @@ body {
   .artist-content-section { padding: 0 16px 40px !important; }
 
   /* Additional mobile fixes */
-  .song-item {
+  .song-item, .playlist-item {
     padding: 8px 10px;
     gap: 10px;
   }
