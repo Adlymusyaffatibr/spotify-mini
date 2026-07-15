@@ -468,8 +468,9 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
   const nowPlayingText = document.getElementById('nowPlaying');
 
   // Agar app tidak di-suspend saat mencari lagu di background:
-  // Set silent audio dan play segera untuk mengunci user gesture di iOS/Android
+  // Set silent audio (looping) dan play segera untuk mengunci user gesture di iOS/Android
   audioPlayer.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+  audioPlayer.loop = true;
   audioPlayer.style.display = 'none';
   audioPlayer.play().catch(() => {});
   
@@ -510,6 +511,7 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
     const fallbackToIframe = () => {
       console.warn('Audio stream gagal, fallback ke YouTube Iframe...');
       audioPlayer.pause();
+      audioPlayer.loop = false;
       audioPlayer.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
       audioPlayer.style.display = 'none';
       window.currentPlayingType = 'youtube';
@@ -534,6 +536,7 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
       audioPlayer._streamErrorHandler = fallbackToIframe;
       audioPlayer.addEventListener('error', audioPlayer._streamErrorHandler, { once: true });
 
+      audioPlayer.loop = false;
       audioPlayer.src = `/api/stream-audio?videoId=${videoId}`;
       audioPlayer.style.display = 'block';
 
@@ -554,6 +557,7 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
       return;
     }
     if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName} (Preview 30s)`;
+    audioPlayer.loop = false;
     audioPlayer.src = previewUrl;
     audioPlayer.style.display = 'block';
     audioPlayer.play();
@@ -585,6 +589,11 @@ function updateNowPlayingBar(trackName, artistName, artworkUrl, genre) {
       artist: artistName,
       album: 'MoodTunes',
       artwork: [
+        { src: art, sizes: '96x96', type: 'image/jpeg' },
+        { src: art, sizes: '128x128', type: 'image/jpeg' },
+        { src: art, sizes: '192x192', type: 'image/jpeg' },
+        { src: art, sizes: '256x256', type: 'image/jpeg' },
+        { src: art, sizes: '384x384', type: 'image/jpeg' },
         { src: art, sizes: '512x512', type: 'image/jpeg' }
       ]
     });
@@ -593,6 +602,12 @@ function updateNowPlayingBar(trackName, artistName, artworkUrl, genre) {
     navigator.mediaSession.setActionHandler('pause', togglePlay);
     navigator.mediaSession.setActionHandler('previoustrack', playPrev);
     navigator.mediaSession.setActionHandler('nexttrack', playNext);
+    navigator.mediaSession.setActionHandler('seekto', (details) => {
+      const audio = document.getElementById('audioPlayer');
+      if (audio && details.seekTime !== undefined) {
+        audio.currentTime = details.seekTime;
+      }
+    });
   }
 }
 
