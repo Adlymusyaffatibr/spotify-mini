@@ -1,4 +1,4 @@
-const ytdl = require('@distube/ytdl-core');
+const youtubedl = require('youtube-dl-exec');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -9,21 +9,28 @@ module.exports = async (req, res) => {
   if (!videoId) return res.status(400).json({ error: 'Missing videoId' });
 
   try {
-    const info = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videoId}`);
+    const info = await youtubedl(`https://www.youtube.com/watch?v=${videoId}`, {
+      dumpJson: true,
+      noWarnings: true,
+      noCallHome: true,
+      noCheckCertificate: true,
+      preferFreeFormats: true,
+      youtubeSkipDashManifest: true
+    });
 
-    // Pilih format audio-only terbaik
-    const formats = info.formats.filter((f) => f.hasAudio && !f.hasVideo);
-    formats.sort((a, b) => (b.audioBitrate || 0) - (a.audioBitrate || 0));
-    const format =
-      formats[0] ||
-      ytdl.chooseFormat(info.formats, { quality: 'highestaudio', filter: 'audioonly' });
-
-    if (!format || !format.url) {
-      return res.status(500).json({ error: 'No audio format found' });
+    if (!info || !info.formats) {
+      return res.status(500).json({ error: 'No formats found' });
     }
 
-    // Redirect langsung ke URL audio YouTube.
-    // Browser yang men-stream langsung dari CDN YouTube — tidak ada timeout Vercel.
+    // Pilih format audio-only
+    const formats = info.formats.filter(f => f.acodec !== 'none' && f.vcodec === 'none');
+    formats.sort((a, b) => (b.abr || 0) - (a.abr || 0));
+    const format = formats[0] || info.formats[0];
+
+    if (!format || !format.url) {
+      return res.status(500).json({ error: 'No audio format url found' });
+    }
+
     res.setHeader('Cache-Control', 'no-store');
     return res.redirect(302, format.url);
   } catch (error) {
