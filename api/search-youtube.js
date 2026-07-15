@@ -1,4 +1,4 @@
-const ytSearch = require('yt-search');
+const play = require('play-dl');
 
 module.exports = async (req, res) => {
   // Set CORS headers for Vercel
@@ -15,17 +15,15 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const result = await ytSearch(query);
-    const videos = result.videos;
+    const result = await play.search(query, { limit: 1 });
     
-    if (videos && videos.length > 0) {
-      // Return the first video ID
-      return res.status(200).json({ videoId: videos[0].videoId });
+    if (result && result.length > 0) {
+      return res.status(200).json({ videoId: result[0].id });
     } else {
       return res.status(404).json({ error: 'Video not found' });
     }
   } catch (error) {
-    console.error('yt-search error:', error);
+    console.error('play-dl search error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
