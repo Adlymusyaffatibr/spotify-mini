@@ -549,19 +549,23 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
       fallbackToIframe();
     }
   } else {
-    window.currentPlayingType = 'audio';
-    // Fallback: iTunes preview (30 detik)
-    if (!previewUrl || previewUrl === 'undefined') {
-      if (nowPlayingText) nowPlayingText.textContent = `Tidak bisa memutar "${trackName}" 😔`;
-      nowPlayingInline.classList.remove('visible');
-      return;
-    }
-    if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName} (Preview 30s)`;
+    console.warn('Video ID tidak ditemukan, fallback ke YouTube Search Iframe...');
+    audioPlayer.pause();
     audioPlayer.loop = false;
-    audioPlayer.src = previewUrl;
-    audioPlayer.style.display = 'block';
-    audioPlayer.play();
+    audioPlayer.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+    audioPlayer.style.display = 'none';
+    window.currentPlayingType = 'youtube';
+    if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName}`;
+    youtubePlayer.src = `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1&enablejsapi=1`;
+    youtubePlayer.style.display = 'block';
     setPlayState(true);
+    setTimeout(() => {
+      const vol = document.getElementById('volumeSlider')?.value ?? 80;
+      if (youtubePlayer.contentWindow) {
+        youtubePlayer.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [vol] }), '*');
+        youtubePlayer.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1 }), '*');
+      }
+    }, 2000);
   }
 }
 
