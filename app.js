@@ -514,9 +514,10 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
     // Helper: fallback ke YouTube Iframe jika audio gagal
     const fallbackToIframe = () => {
       console.warn('Audio stream gagal, fallback ke YouTube Iframe...');
-      audioPlayer.pause();
-      audioPlayer.loop = false;
+      // Keep silent audio playing to maintain Media Session (lock screen controls)
       audioPlayer.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+      audioPlayer.loop = true;
+      audioPlayer.play().catch(() => {});
       audioPlayer.style.display = 'none';
       window.currentPlayingType = 'youtube';
       if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName} (Iframe Mode)`;
@@ -554,9 +555,10 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
     }
   } else {
     console.warn('Video ID tidak ditemukan, fallback ke YouTube Search Iframe...');
-    audioPlayer.pause();
-    audioPlayer.loop = false;
+    // Keep silent audio playing to maintain Media Session
     audioPlayer.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+    audioPlayer.loop = true;
+    audioPlayer.play().catch(() => {});
     audioPlayer.style.display = 'none';
     window.currentPlayingType = 'youtube';
     if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName}`;
@@ -653,9 +655,11 @@ function togglePlay() {
   if (window.currentPlayingType === 'youtube' && yt && yt.contentWindow) {
     if (window.isPlaying) {
       yt.contentWindow.postMessage(JSON.stringify({event: "command", func: "pauseVideo", args: ""}), '*');
+      if (audio) audio.pause();
       setPlayState(false);
     } else {
       yt.contentWindow.postMessage(JSON.stringify({event: "command", func: "playVideo", args: ""}), '*');
+      if (audio) audio.play().catch(()=>{});
       setPlayState(true);
     }
   } else if (window.currentPlayingType === 'audio' && audio && audio.src) {
