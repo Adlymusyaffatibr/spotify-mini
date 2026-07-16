@@ -177,14 +177,18 @@ function renderSongItem(song, index, type) {
     : `<span class="song-artist">${artistName}</span>`;
 
   div.innerHTML = `
-    ${numHtml}
+    <div class="song-index-container">
+      ${numHtml}
+      <span class="play-icon">▶</span>
+    </div>
     <div class="song-album-thumb">${artHtml}</div>
     <div class="song-info">
       <div class="song-name">${escapeHtml(song.trackName)}</div>
       ${artistHtml}
     </div>
-    <button class="add-queue-btn" title="Tambah ke Antrean" onclick="addToQueue(event, ${index}, '${type}')">+</button>
-    <span class="play-icon">▶</span>
+    <button class="add-queue-btn" title="Tambah ke Antrean" onclick="addToQueue(event, ${index}, '${type}')">
+      <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M15.25 8a.75.75 0 0 1-.75.75H8.75v5.75a.75.75 0 0 1-1.5 0V8.75H1.5a.75.75 0 0 1 0-1.5h5.75V1.5a.75.75 0 0 1 1.5 0v5.75h5.75a.75.75 0 0 1 .75.75z"></path></svg>
+    </button>
     <span class="song-duration">${formatDuration(song.trackTimeMillis)}</span>
   `;
   return div;
