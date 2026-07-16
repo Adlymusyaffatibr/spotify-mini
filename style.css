@@ -283,9 +283,9 @@ body {
 /* ===== HOME GRID ===== */
 .home-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
 }
 
 .home-card {
@@ -293,29 +293,29 @@ body {
   align-items: center;
   gap: 16px;
   padding: 0;
-  border-radius: var(--radius);
+  border-radius: 6px;
   cursor: pointer;
-  transition: var(--transition);
+  transition: background-color 0.3s ease;
   overflow: hidden;
   font-weight: 700;
-  font-size: 14px;
-  height: 64px;
+  font-size: 16px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.home-card.green { background: linear-gradient(135deg, #005f2f, var(--sp-green)); }
-.home-card.purple { background: linear-gradient(135deg, #4a0080, var(--sp-purple)); }
-
-.home-card:hover { filter: brightness(1.15); transform: scale(1.02); }
+.home-card:hover { 
+  background: rgba(255, 255, 255, 0.2); 
+}
 
 .home-card-icon {
-  width: 64px;
-  height: 64px;
+  width: 80px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
-  background: rgba(0,0,0,0.2);
+  font-size: 32px;
   flex-shrink: 0;
+  box-shadow: 4px 0 12px rgba(0,0,0,0.2);
 }
 
 .home-card-text {
@@ -325,22 +325,22 @@ body {
 /* Feature Cards */
 .feature-cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 24px;
 }
 
 .feature-card {
   background: var(--bg-elevated);
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  padding: 16px;
   cursor: pointer;
-  transition: var(--transition);
+  transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
 .feature-card:hover {
   background: var(--bg-elevated-2);
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
 }
 
 .feature-card-art {
@@ -349,24 +349,35 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 48px;
+  font-size: 64px;
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
 }
 
-.purple-bg { background: linear-gradient(135deg, #2d1b69, #6a1b9a); }
-.green-bg { background: linear-gradient(135deg, #1a3d2b, #1db954); }
+.purple-bg { background: linear-gradient(135deg, #4a0080, #8e44ad); }
+.green-bg { background: linear-gradient(135deg, #005f2f, #1db954); }
 .blue-bg { background: linear-gradient(135deg, #1a2f4a, #2980b9); }
 
 .feature-card-title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
-  padding: 12px 12px 4px;
+  padding: 0 0 8px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .feature-card-desc {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-secondary);
-  padding: 0 12px 14px;
+  padding: 0;
   line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* ============================================================
