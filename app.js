@@ -591,6 +591,9 @@ function updateNowPlayingBar(trackName, artistName, artworkUrl, genre) {
     }
   }
 
+  // Update the floating Media Controls Widget
+  updateMCW(trackName, artistName, artworkUrl, genre);
+
   // Update Media Session API for background playback & lockscreen controls
   if ('mediaSession' in navigator) {
     const art = artworkUrl ? artworkUrl.replace('60x60', '512x512').replace('100x100', '512x512') : 'https://via.placeholder.com/512';
@@ -625,6 +628,9 @@ function setPlayState(playing) {
   window.isPlaying = playing;
   const btn = document.getElementById('npPlayBtn');
   if (btn) btn.textContent = playing ? '⏸' : '▶';
+
+  // Sync MCW play/pause icon
+  mcwSetPlayState(playing);
 
   // ── KUNCI background playback ──
   // Tanpa playbackState = 'playing', Android TIDAK menampilkan lockscreen controls
@@ -1020,3 +1026,111 @@ window.addEventListener('appinstalled', () => {
   window.deferredInstallPrompt = null;
   dismissInstallBanner();
 });
+
+// ============================================================
+//  MEDIA CONTROLS WIDGET
+// ============================================================
+window._mcwTickInterval = null;
+
+/**
+ * Update the Media Controls Widget with current song info.
+ * Called from updateNowPlayingBar() when a new song starts.
+ */
+function updateMCW(trackName, artistName, artworkUrl, genre) {
+  const widget   = document.getElementById('mediaControlsWidget');
+  const mcwArt   = document.getElementById('mcwArt');
+  const mcwTitle = document.getElementById('mcwTitle');
+  const mcwMeta  = document.getElementById('mcwMeta');
+  if (!widget) return;
+
+  // Show widget
+  widget.classList.add('visible');
+
+  // Album art
+  if (artworkUrl) {
+    mcwArt.innerHTML = `<img src="${artworkUrl}" alt="${escapeHtml(trackName)}" />`;
+  } else {
+    mcwArt.innerHTML = `<span id="mcwArtEmoji">${getGenreEmoji(genre)}</span>`;
+  }
+
+  // Title & meta
+  if (mcwTitle) mcwTitle.textContent = trackName || 'Unknown';
+  if (mcwMeta)  mcwMeta.textContent  = artistName ? `${artistName} · Direkomenda...` : '—';
+
+  // Reset progress
+  mcwUpdateProgress(0, 0);
+
+  // Start ticking
+  if (window._mcwTickInterval) clearInterval(window._mcwTickInterval);
+  window._mcwTickInterval = setInterval(mcwTick, 500);
+}
+
+/** Format seconds → m:ss */
+function mcwFmtTime(sec) {
+  if (!sec || !isFinite(sec)) return '0:00';
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+/** Update progress bar & timestamps */
+function mcwUpdateProgress(current, duration) {
+  const fill      = document.getElementById('mcwProgressFill');
+  const thumb     = document.getElementById('mcwProgressThumb');
+  const curEl     = document.getElementById('mcwCurrentTime');
+  const durEl     = document.getElementById('mcwDuration');
+
+  const pct = duration > 0 ? Math.min((current / duration) * 100, 100) : 0;
+
+  if (fill)  fill.style.width  = `${pct}%`;
+  if (thumb) thumb.style.left  = `${pct}%`;
+  if (curEl) curEl.textContent = mcwFmtTime(current);
+  if (durEl) durEl.textContent = mcwFmtTime(duration);
+}
+
+/** Called every 500 ms to sync progress from audio element */
+function mcwTick() {
+  const audio = document.getElementById('audioPlayer');
+  if (window.currentPlayingType === 'audio' && audio && audio.duration && isFinite(audio.duration)) {
+    mcwUpdateProgress(audio.currentTime, audio.duration);
+  } else if (window.currentPlayingType === 'youtube') {
+    // YouTube iframe: we only have window.currentPlaybackTime (from postMessage)
+    // Duration is not easily available; show indeterminate state
+    const cur = window.currentPlaybackTime || 0;
+    mcwUpdateProgress(cur, 0);
+  }
+}
+
+/** Click on progress bar to seek */
+function mcwSeek(event) {
+  const bar = document.getElementById('mcwProgressBar');
+  if (!bar) return;
+  const rect = bar.getBoundingClientRect();
+  const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+
+  if (window.currentPlayingType === 'audio') {
+    const audio = document.getElementById('audioPlayer');
+    if (audio && audio.duration && isFinite(audio.duration)) {
+      audio.currentTime = ratio * audio.duration;
+    }
+  } else if (window.currentPlayingType === 'youtube') {
+    const yt = document.getElementById('youtubePlayer');
+    if (yt && yt.contentWindow) {
+      // We don't know duration for YT iframe, so skip seek
+    }
+  }
+}
+
+/** Sync the MCW play/pause icon with global play state */
+function mcwSetPlayState(playing) {
+  const icon = document.getElementById('mcwPlayIcon');
+  if (!icon) return;
+  if (playing) {
+    // Pause icon
+    icon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+  } else {
+    // Play icon
+    icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+  }
+}
+

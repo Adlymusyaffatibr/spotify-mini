@@ -20,7 +20,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Circular+Std:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="style.css?v=4" />
+    <link rel="stylesheet" href="style.css?v=5" />
   </head>
   <body>
 
@@ -258,6 +258,43 @@
       </div>
     </div>
 
+    <!-- ===== MEDIA CONTROLS WIDGET (Spotify-style floating card) ===== -->
+    <div class="media-controls-widget" id="mediaControlsWidget">
+      <div class="mcw-inner">
+        <!-- Album Art -->
+        <div class="mcw-art" id="mcwArt">
+          <span id="mcwArtEmoji">🎵</span>
+        </div>
+        <!-- Track Info -->
+        <div class="mcw-info">
+          <div class="mcw-title" id="mcwTitle">Belum ada lagu</div>
+          <div class="mcw-meta" id="mcwMeta">—</div>
+        </div>
+        <!-- Cast icon (dekoratif) -->
+        <div class="mcw-cast" title="Cast">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M1 18v3h3c0-1.66-1.34-3-3-3zm0-4v2c2.76 0 5 2.24 5 5h2c0-3.87-3.13-7-7-7zm18-7H5c-1.1 0-2 .9-2 2v3h2v-3h14v10h-5v2h5c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM1 10v2c4.97 0 9 4.03 9 9h2c0-6.08-4.92-11-11-11z"/></svg>
+        </div>
+        <!-- Controls Row -->
+        <div class="mcw-controls">
+          <button class="mcw-btn mcw-play" id="mcwPlayBtn" onclick="togglePlay()" title="Play/Pause">
+            <svg id="mcwPlayIcon" viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+          </button>
+          <button class="mcw-btn mcw-next" onclick="playNext()" title="Next">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+          </button>
+        </div>
+      </div>
+      <!-- Progress Bar -->
+      <div class="mcw-progress-wrap">
+        <span class="mcw-time" id="mcwCurrentTime">0:00</span>
+        <div class="mcw-progress-bar" id="mcwProgressBar" onclick="mcwSeek(event)">
+          <div class="mcw-progress-fill" id="mcwProgressFill"></div>
+          <div class="mcw-progress-thumb" id="mcwProgressThumb"></div>
+        </div>
+        <span class="mcw-time" id="mcwDuration">0:00</span>
+      </div>
+    </div>
+
     <!-- Mobile Sidebar Toggle -->
     <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">☰</button>
 
@@ -276,6 +313,6 @@
       </div>
     </div>
 
-    <script src="app.js?v=3"></script>
+    <script src="app.js?v=4"></script>
   </body>
 </html>

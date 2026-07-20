@@ -224,8 +224,8 @@ body {
   top: 0;
   z-index: 10;
   background: rgba(18,18,18,0.85);
-  backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1529,5 +1529,208 @@ body {
 @media (max-width: 680px) {
   .pwa-install-banner {
     bottom: 74px; /* Adjust for mobile bottom bar */
+  }
+}
+
+/* ============================================================
+   MEDIA CONTROLS WIDGET (Spotify floating mini-player)
+   ============================================================ */
+.media-controls-widget {
+  position: fixed;
+  /* Default: top-right corner on desktop */
+  top: 24px;
+  right: 24px;
+  z-index: 300;
+
+  width: 300px;
+  background: rgba(60, 75, 90, 0.82);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.45),
+    0 2px 8px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+  padding: 14px 16px 12px;
+  display: none;               /* Hidden until a song is playing */
+  flex-direction: column;
+  gap: 10px;
+  animation: mcwSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  -webkit-user-select: none;
+  user-select: none;
+
+  /* Drag support placeholder — widget is draggable via JS */
+  cursor: default;
+}
+
+.media-controls-widget.visible {
+  display: flex;
+}
+
+@keyframes mcwSlideIn {
+  from { opacity: 0; transform: translateY(-12px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Inner row: art + info + cast + controls */
+.mcw-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Album art */
+.mcw-art {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+}
+
+.mcw-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Track info */
+.mcw-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.mcw-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.mcw-meta {
+  font-size: 11px;
+  color: rgba(255,255,255,0.65);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+/* Cast icon */
+.mcw-cast {
+  color: rgba(255,255,255,0.55);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.mcw-cast:hover { color: rgba(255,255,255,0.9); }
+
+/* Controls */
+.mcw-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.mcw-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.9);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.mcw-btn:hover {
+  background: rgba(255,255,255,0.15);
+  transform: scale(1.1);
+}
+
+.mcw-btn:active { transform: scale(0.93); }
+
+/* Progress bar row */
+.mcw-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mcw-time {
+  font-size: 10px;
+  color: rgba(255,255,255,0.6);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  min-width: 30px;
+}
+
+.mcw-time:last-child { text-align: right; }
+
+.mcw-progress-bar {
+  flex: 1;
+  height: 3px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 2px;
+  position: relative;
+  cursor: pointer;
+  transition: height 0.15s;
+}
+
+.mcw-progress-bar:hover {
+  height: 5px;
+}
+
+.mcw-progress-fill {
+  height: 100%;
+  background: #fff;
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.25s linear;
+  pointer-events: none;
+}
+
+.mcw-progress-thumb {
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  transform: translate(-50%, -50%) scale(0);
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #fff;
+  pointer-events: none;
+  transition: transform 0.15s, left 0.25s linear;
+}
+
+.mcw-progress-bar:hover .mcw-progress-thumb {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* Mobile: move widget to bottom-left above nav bar, smaller */
+@media (max-width: 680px) {
+  .media-controls-widget {
+    top: auto;
+    bottom: calc(var(--np-bar-height) + 16px);
+    right: 12px;
+    left: 12px;
+    width: auto;
+    border-radius: 14px;
   }
 }
