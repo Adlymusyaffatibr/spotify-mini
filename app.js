@@ -57,6 +57,26 @@ function updateGreeting() {
   else el.textContent = 'Selamat Malam 🌙';
 }
 
+// ── Background Keepalive ──────────────────────────────────────
+// Aktifkan silent audio loop (volume 0) saat pertama kali user gesture
+// Ini yang menjaga audio context tetap hidup di background/lock screen
+window._bgKeepaliveStarted = false;
+
+function startBgKeepalive() {
+  if (window._bgKeepaliveStarted) return;
+  const ka = document.getElementById('bgKeepalive');
+  if (!ka) return;
+  ka.volume = 0;
+  ka.play().then(() => {
+    window._bgKeepaliveStarted = true;
+  }).catch(() => {});
+}
+
+// Panggil keepalive saat pertama kali ada interaksi user
+['click', 'touchstart', 'keydown'].forEach(evt => {
+  document.addEventListener(evt, startBgKeepalive, { once: false, passive: true });
+});
+
 function setupKeyboard() {
   const input = document.getElementById('searchInput');
   if (input) {
@@ -85,14 +105,70 @@ function setupKeyboard() {
       }
     });
 
-    // Sinkronkan playbackState saat audio di-pause/play dari kontrol browser bawaan
+    // Sinkronkan playbackState — tapi HANYA update UI jika audio beneran diputar/paused
     audioPlayer.addEventListener('play', () => {
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+      // Jika ini bukan silent WAV, update UI
+      if (audioPlayer.src && !audioPlayer.src.startsWith('data:audio/wav')) {
+        setPlayState(true);
+      }
     });
+
     audioPlayer.addEventListener('pause', () => {
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+      // Jika ini bukan silent WAV dan kita seharusnya playing,
+      // kemungkinan browser force-paused karena background → coba resume
+      if (audioPlayer.src && !audioPlayer.src.startsWith('data:audio/wav')) {
+        if (window.isPlaying && document.hidden) {
+          // Browser paused audio karena tab hidden — coba resume lagi
+          setTimeout(() => {
+            if (window.isPlaying && audioPlayer.paused) {
+              audioPlayer.play().catch(() => {});
+            }
+          }, 300);
+        } else if (!document.hidden) {
+          // User sendiri yang pause → update UI
+          setPlayState(false);
+        }
+      }
     });
   }
+
+  // ── Visibility Change Handler ─────────────────────────────────
+  // Ketika user kembali ke tab/app → pastikan audio tetap jalan
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      // Tab kembali aktif — pastikan keepalive tetap jalan
+      const ka = document.getElementById('bgKeepalive');
+      if (ka && window._bgKeepaliveStarted && ka.paused) {
+        ka.volume = 0;
+        ka.play().catch(() => {});
+      }
+
+      // Jika seharusnya sedang playing tapi audio terhenti → resume
+      const audio = document.getElementById('audioPlayer');
+      if (window.isPlaying && window.currentPlayingType === 'audio' && audio) {
+        if (audio.paused && audio.src && !audio.src.startsWith('data:audio/wav')) {
+          audio.play().catch(() => {});
+        }
+      }
+
+      // Untuk YouTube iframe mode → pastikan masih playing
+      if (window.isPlaying && window.currentPlayingType === 'youtube') {
+        const yt = document.getElementById('youtubePlayer');
+        if (yt && yt.contentWindow) {
+          yt.contentWindow.postMessage(JSON.stringify({event:'command', func:'playVideo', args:''}), '*');
+        }
+      }
+    } else {
+      // Tab pergi ke background → pastikan keepalive tetap jalan
+      const ka = document.getElementById('bgKeepalive');
+      if (ka && window._bgKeepaliveStarted && ka.paused) {
+        ka.volume = 0;
+        ka.play().catch(() => {});
+      }
+    }
+  });
 
   window.addEventListener('message', (e) => {
     if (e.origin === "https://www.youtube.com") {
@@ -106,6 +182,7 @@ function setupKeyboard() {
     }
   });
 }
+
 
 function switchView(viewName, navEl) {
   // Hide all views
@@ -471,20 +548,20 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
   const nowPlayingInline = document.getElementById('nowPlayingBar');
   const nowPlayingText = document.getElementById('nowPlaying');
 
-  // Agar app tidak di-suspend saat mencari lagu di background:
-  // Set silent audio (looping) dan play segera untuk mengunci user gesture di iOS/Android
-  audioPlayer.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-  audioPlayer.loop = true;
-  audioPlayer.style.display = 'none';
-  audioPlayer.play().catch(() => {});
-  
+  // ── Aktifkan bgKeepalive untuk menjaga audio context hidup di background ──
+  // bgKeepalive adalah silent audio loop terpisah — tidak mengganggu audioPlayer
+  startBgKeepalive();
+
   if ('mediaSession' in navigator) {
     navigator.mediaSession.playbackState = 'playing';
   }
 
-  // Reset YouTube
+  // Reset YouTube & audioPlayer
   youtubePlayer.src = '';
   youtubePlayer.style.display = 'none';
+  audioPlayer.pause();
+  audioPlayer.src = '';
+  audioPlayer.style.display = 'none';
   window.currentPlaybackTime = 0;
 
   // Show player section
@@ -514,10 +591,8 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
     // Helper: fallback ke YouTube Iframe jika audio gagal
     const fallbackToIframe = () => {
       console.warn('Audio stream gagal, fallback ke YouTube Iframe...');
-      // Keep silent audio playing to maintain Media Session (lock screen controls)
-      audioPlayer.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-      audioPlayer.loop = true;
-      audioPlayer.play().catch(() => {});
+      audioPlayer.pause();
+      audioPlayer.src = '';
       audioPlayer.style.display = 'none';
       window.currentPlayingType = 'youtube';
       if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName} (Iframe Mode)`;
@@ -555,10 +630,8 @@ async function playSong(previewUrl, trackName, artistName, artworkUrl, genre) {
     }
   } else {
     console.warn('Video ID tidak ditemukan, fallback ke YouTube Search Iframe...');
-    // Keep silent audio playing to maintain Media Session
-    audioPlayer.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-    audioPlayer.loop = true;
-    audioPlayer.play().catch(() => {});
+    audioPlayer.pause();
+    audioPlayer.src = '';
     audioPlayer.style.display = 'none';
     window.currentPlayingType = 'youtube';
     if (nowPlayingText) nowPlayingText.textContent = `▶ ${trackName} — ${artistName}`;

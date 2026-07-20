@@ -42,6 +42,15 @@
   padding: 0;
 }
 
+/* Hidden background keepalive audio — must not be visible or take up space */
+.bg-keepalive-audio {
+  display: none;
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
 html { scroll-behavior: smooth; overflow-x: hidden; max-width: 100vw; }
 
 body {
